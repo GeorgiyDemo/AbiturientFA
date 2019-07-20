@@ -41,23 +41,19 @@ class get_results_class():
 #TODO  Более адексатное переименование JSON
     def compare_userdata(self, data):
         global UPDATE_DATA
-        tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+data[0][4]+"'", 2)
-        changes_bufarr = {"tid" : tid_from_name.result["tid"], "updates":[]}
-        bool_flag = False
         for item in data:
+            tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+item[4]+"'", 2)
             bufscore = database_module.mysql_writer("SELECT waynumber FROM ways WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 2)
-            if bufscore.result["waynumber"] != item[3]:
-                bool_flag = True
-                changes_bufarr["updates"].append(
+            if str(bufscore.result["waynumber"]) != str(item[3]):
+                UPDATE_DATA.append(
                     {
+                        "tid": tid_from_name.result["tid"],
                         "wayname": item[1],
-                        "changed_from" : bufscore.result["waynumber"],
-                        "changed_to": item[3]
+                        "changed_from" : str(bufscore.result["waynumber"]),
+                        "changed_to": str(item[3])
                     }
                 )
                 database_module.mysql_writer("UPDATE ways SET waynumber="+item[3]+" WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 1)
-        if bool_flag == True:
-            UPDATE_DATA.append(changes_bufarr)
 
 
 #Класс обработки регистрации пользователя
