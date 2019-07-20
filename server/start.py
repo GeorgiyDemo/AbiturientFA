@@ -18,7 +18,7 @@ app = Flask(__name__)
 # Подключение для получения результатов обработки документов
 
 #Запуск в отдельном потоке от Flask
-def threading_check_results():
+def threading_check_server_results():
     while True:
         get_results_class()
         time.sleep(60)
@@ -105,7 +105,7 @@ class parse_links_class():
         element.clear()
         element.send_keys(self.abitname)
         #Ожидаем пока прогрузится страничка
-        time.sleep(6)
+        time.sleep(8)
         soup_content = BeautifulSoup(driver.page_source, "lxml")
 
         i = 0
@@ -145,5 +145,5 @@ def get_updates():
     return json.dumps(out_data, ensure_ascii=False)
 
 if __name__ == '__main__':
-    threading.Thread(target=threading_check_results).start()
+    threading.Thread(target=threading_check_server_results).start()
     app.run(host='127.0.0.1', debug=False)

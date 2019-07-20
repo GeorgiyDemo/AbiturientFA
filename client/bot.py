@@ -1,18 +1,28 @@
 """
     Клиент Telegram для определения рейтинга абитуры
 """
-import telegram, yaml, requests, time
+import telegram, yaml, requests, time, threading
 from telegram.error import NetworkError, Unauthorized
 
 update_id = None
+
+def threading_check_client_results(bot):
+    while True:
+        update_request = requests.post("http://127.0.0.1:5000/updates").json()
+        if update_request != []:
+            for update in update_request:
+                bot.send_message(chat_id=update["tid"], text="Изменение места с "+update["changed_from"]+" на "+update["changed_to"]+" на направлении "+update["wayname"])
+
+        print(update_request)
+        time.sleep(60)
 
 def main():
     """Run the bot."""
     global update_id
     with open("./tokens.yaml", 'r') as stream:
         token = yaml.load(stream)
-
     bot = telegram.Bot(token)
+    threading.Thread(target=threading_check_client_results, args=(bot,)).start()
     try:
         update_id = bot.get_updates()[0].update_id
     except IndexError:
@@ -62,9 +72,6 @@ def handler(bot):
 
                 #Я не понял, что ты хочешь этим сказать? Если хочешь заменить Фио - хорошо
                 #
-
-
-#bot.send_message(chat_id=chat_id, text="I'm sorry Dave I'm afraid I can't do that.")
 
 if __name__ == '__main__':
     main()
