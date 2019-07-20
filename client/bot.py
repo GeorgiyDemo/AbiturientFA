@@ -47,11 +47,12 @@ def handler(bot):
                 return 0
             name = name[1]+" "+name[2]+" "+name[3]
             update.message.reply_text("Ищем в списках \""+name+"\"..")
-            r = requests.post("http://127.0.0.1:5000/adduser",json={"tid":"2432432", "username":name}).json() #TODO УЗНАТЬ КАК ВЗЯТЬ ID TELEGRAM'А
+            r = requests.post("http://127.0.0.1:5000/adduser",json={"tid":update.message.from_user.id, "username":name}).json() #TODO УЗНАТЬ КАК ВЗЯТЬ ID TELEGRAM'А
+            print(r)
             if r["status"] == "ok":
-                update.message.reply_text("Да, ты есть в списках, добавляем..")
+                update.message.reply_text("🦀 Да, ты есть в списках, добавляем 🦀")
             else:
-                update.message.reply_text("Я не вижу тебя в списках((")
+                update.message.reply_text("Я не нашел тебя в списках :c")
 
             #name = update.message.text
             #if len(name.split(" ")) == 3:

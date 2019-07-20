@@ -10,11 +10,10 @@ import time
 import base64, os
 import database_module, json, threading
 from flask import Flask, request
-
+UPDATE_DATA = []
 GLOBAL_URL = "http://lists4priemka.fa.ru/listabits.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E"
 global_threading_driver = webdriver.Chrome()
 global_signup_driver = webdriver.Chrome()
-
 app = Flask(__name__)
 # Подключение для получения результатов обработки документов
 
@@ -25,13 +24,6 @@ def threading_check_results():
         time.sleep(60)
 
 
-#Класс для провеки есть ли чел в списке в целом
-def signup_user_check(user):
-    try:
-        parse_links_class(user, global_signup_driver)
-        return True
-    except:
-        return False
 #Классы для работы в отдельном потоке
 class get_results_class():
 
@@ -42,17 +34,70 @@ class get_results_class():
         driver = global_threading_driver
         users = database_module.mysql_writer("SELECT name FROM users",3)
         for name in users.result:
-            parse_links_class(name["name"], driver)
+            user_obj = parse_links_class(name["name"], driver)
+            self.compare_userdata(user_obj.result_arr)
+
+#Сравнение НОВЫХ ДАННЫХ И ДАННЫХ ИЗ БД
+#TODO  Более адексатное переименование JSON
+    def compare_userdata(self, data):
+        global UPDATE_DATA
+        tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+data[0][4]+"'", 2)
+        changes_bufarr = {"tid" : tid_from_name.result["tid"], "updates":[]}
+        bool_flag = False
+        for item in data:
+            bufscore = database_module.mysql_writer("SELECT waynumber FROM ways WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 2)
+            if bufscore.result["waynumber"] != item[3]:
+                bool_flag = True
+                changes_bufarr["updates"].append(
+                    {
+                        "wayname": item[1],
+                        "changed_from" : bufscore.result["waynumber"],
+                        "changed_to": item[3]
+                    }
+                )
+                database_module.mysql_writer("UPDATE ways SET waynumber="+item[3]+" WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 1)
+        if bool_flag == True:
+            UPDATE_DATA.append(changes_bufarr)
+
+
+#Класс обработки регистрации пользователя
+class signup_user_class():
+    def __init__(self, user, tid):
+        self.user = user
+        self.tid = tid
+        self.signup_detection_result = []
+        self.signup_detection()
+        if self.signup_detection_result != []:
+            threading.Thread(target=self.signup_dataparser).start()
+
+    def signup_detection(self):
+        try:
+            signup_obj = parse_links_class(self.user, global_signup_driver)
+            self.signup_detection_result = signup_obj.result_arr
+        except:
+            self.signup_detection_result = []
+
+    def signup_dataparser(self):
+        input_data = self.signup_detection_result
+
+        #Заносим данные в таблицу users
+        exist_check = database_module.mysql_writer("SELECT * FROM users WHERE tid="+str(self.tid),2)
+        if exist_check.result != None:
+            database_module.mysql_writer("UPDATE users SET name='"+self.user+"', score="+str(input_data[0][6])+" WHERE tid="+str(self.tid)+";",1)
+        else:
+            database_module.mysql_writer("INSERT INTO users (tid, name, score) VALUES ("+str(self.tid)+",'"+self.user+"',"+str(input_data[0][6])+");",1)
+        way_exist_check = database_module.mysql_writer("SELECT * FROM ways WHERE tid="+str(self.tid),2)
+        if way_exist_check != None:
+            database_module.mysql_writer("DELETE FROM ways WHERE tid="+str(self.tid)+";",1)
+        for way in input_data:
+            database_module.mysql_writer("INSERT INTO ways (tid, wayname, waynumber) VALUES ("+str(self.tid)+",'"+way[1]+"',"+str(way[3])+");",1)
 
 class parse_links_class():
     def __init__(self, abitname, driver):
         self.driver = driver
         self.abitname = abitname
-        print("***")
-        print(abitname)
         self.result_arr = []
         self.abit_parser()
-        self.out_result()
 
     def abit_parser(self):
         result_arr = self.result_arr
@@ -80,13 +125,6 @@ class parse_links_class():
                 i = -1
         self.result_arr = result_arr
 
-    #ЕСЛИ ЗАПИСЬ В БД ДРУГАЯ - АПДЕЙТ МАССИВЧИКА
-    def out_result(self):
-        result_arr = self.result_arr
-        print(result_arr[0][4]+"\n")
-        for item in result_arr:
-            print(item[1]+"\nМесто: "+str(item[3]))
-
 
 #Flask API для менеджмента
 @app.route('/adduser', methods=['POST','GET'])
@@ -97,10 +135,18 @@ def add_user():
     tg_data = request.json
     name = tg_data["username"]
     tid = tg_data["tid"]
-    if signup_user_check(name) == False:
+    signup_obj = signup_user_class(name, tid)
+    if signup_obj.signup_detection_result == []:
         return json.dumps({"status": "exception", "description": "Пользователя нет в списке"})
     return json.dumps({"status": "ok"})
-    #return "MEOW"
+
+#Обновления
+@app.route('/updates', methods=['POST','GET'])
+def get_updates():
+    global UPDATE_DATA
+    out_data = UPDATE_DATA
+    UPDATE_DATA = []
+    return json.dumps(out_data, ensure_ascii=False)
 
 if __name__ == '__main__':
     threading.Thread(target=threading_check_results).start()
