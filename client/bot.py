@@ -1,13 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""Simple Bot to reply to Telegram messages.
-This is built on the API wrapper, see echobot2.py to see the same example built
-on the telegram.ext bot framework.
-This program is dedicated to the public domain under the CC0 license.
 """
-import telegram, yaml.emitter
+    Клиент Telegram для определения рейтинга абитуры
+"""
+import telegram, yaml, requests, time
 from telegram.error import NetworkError, Unauthorized
-from time import sleep
 
 update_id = None
 
@@ -25,15 +20,14 @@ def main():
 
     while True:
         try:
-            echo(bot)
+            handler(bot)
         except NetworkError:
-            sleep(1)
+            time.sleep(1)
         except Unauthorized:
             update_id += 1
 
 
-def echo(bot):
-    """Echo the message the user sent."""
+def handler(bot):
     global update_id
     # Request updates after the last update_id
     for update in bot.get_updates(offset=update_id, timeout=10):
@@ -48,8 +42,16 @@ def echo(bot):
         elif update.message.text.split(" ")[0]=="/set":
             #Вы уже установили ФИО, хотите заменить?
             name = update.message.text.split(" ")
+            #Чтоб ФИО было полное
+            if len(name) != 4:
+                return 0
             name = name[1]+" "+name[2]+" "+name[3]
-            update.message.reply_text("Хорошо, ищем в списках \""+name+"\"..")
+            update.message.reply_text("Ищем в списках \""+name+"\"..")
+            r = requests.post("http://127.0.0.1:5000/adduser",json={"tid":"2432432", "username":name}).json() #TODO УЗНАТЬ КАК ВЗЯТЬ ID TELEGRAM'А
+            if r["status"] == "ok":
+                update.message.reply_text("Да, ты есть в списках, добавляем..")
+            else:
+                update.message.reply_text("Я не вижу тебя в списках((")
 
             #name = update.message.text
             #if len(name.split(" ")) == 3:
