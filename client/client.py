@@ -9,7 +9,7 @@ update_id = None
 def threading_check_client_results(bot):
     while True:
         try:
-            update_request = requests.post("http://127.0.0.1:5000/updates").json()
+            update_request = requests.post("http://server:5000/updates").json()
             if update_request != []:
                 for update in update_request:
                     if int(update["changed_from"])>int(update["changed_to"]):
@@ -59,7 +59,7 @@ def handler(bot):
                 return 0
             name = name[1]+" "+name[2]+" "+name[3]
             update.message.reply_text("Ищем в списках \""+name+"\" (может занять некоторое время)")
-            r = requests.post("http://127.0.0.1:5000/adduser",json={"tid":update.message.from_user.id, "username":name}).json()
+            r = requests.post("http://server:5000/adduser",json={"tid":update.message.from_user.id, "username":name}).json()
             if r["status"] == "ok":
                 update.message.reply_text("Да, ты есть в списках, успешно добавил тебя в систему 😌\nЕсли заменил направления или ФИО, то воспользуйся заново командой <b>/set</b>", parse_mode=p_mode)
             else:

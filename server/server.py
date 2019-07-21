@@ -15,10 +15,16 @@ UPDATE_DATA = []
 GLOBAL_URL = "http://lists4priemka.fa.ru/listabits.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E"
 PAGE_WAITING_INT = 8
 
+#Фикс для Docker
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--window-size=1420,1080')
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--disable-gpu')
 #Драйвер для проверки обновлений
-global_threading_driver = webdriver.Chrome()
+global_threading_driver = webdriver.Chrome(chrome_options=chrome_options)
 #Драйвер для регистрации пользователей
-global_signup_driver = webdriver.Chrome()
+global_signup_driver = webdriver.Chrome(chrome_options=chrome_options)
 app = Flask(__name__)
 
 def threading_check_server_results():
@@ -177,4 +183,4 @@ def get_updates():
 
 if __name__ == '__main__':
     threading.Thread(target=threading_check_server_results).start()
-    app.run(host='127.0.0.1', debug=False)
+    app.run(host='0.0.0.0', debug=False)
