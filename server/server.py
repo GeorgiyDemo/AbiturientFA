@@ -10,23 +10,30 @@ import time
 import base64, os
 import database_module, json, threading
 from flask import Flask, request
+
 UPDATE_DATA = []
 GLOBAL_URL = "http://lists4priemka.fa.ru/listabits.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E"
+PAGE_WAITING_INT = 8
+
+#Драйвер для проверки обновлений
 global_threading_driver = webdriver.Chrome()
+#Драйвер для регистрации пользователей
 global_signup_driver = webdriver.Chrome()
 app = Flask(__name__)
-# Подключение для получения результатов обработки документов
 
-#Запуск в отдельном потоке от Flask
 def threading_check_server_results():
+    """
+    Метод для отдельного запуска в threading, с Flask не связан
+    """
     while True:
         get_results_class()
-        time.sleep(60)
-
+        time.sleep(120)
 
 #Классы для работы в отдельном потоке
 class get_results_class():
-
+    """
+    Класс для получения обновлений через selentium
+    """
     def __init__(self):
         self.get_users()
 
@@ -37,27 +44,34 @@ class get_results_class():
             user_obj = parse_links_class(name["name"], driver)
             self.compare_userdata(user_obj.result_arr)
 
-#Сравнение НОВЫХ ДАННЫХ И ДАННЫХ ИЗ БД
-#TODO  Более адексатное переименование JSON
     def compare_userdata(self, data):
+        """
+        Метод для сравнения новых данных и данных в БД
+
+        Если данные разные, то формирует элемент в UPDATE_DATA и заносит новые данные в БД
+        """
         global UPDATE_DATA
         for item in data:
-            tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+item[4]+"'", 2)
-            bufscore = database_module.mysql_writer("SELECT waynumber FROM ways WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 2)
-            if str(bufscore.result["waynumber"]) != str(item[3]):
-                UPDATE_DATA.append(
-                    {
-                        "tid": tid_from_name.result["tid"],
-                        "wayname": item[1],
-                        "changed_from" : str(bufscore.result["waynumber"]),
-                        "changed_to": str(item[3])
-                    }
-                )
-                database_module.mysql_writer("UPDATE ways SET waynumber="+item[3]+" WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 1)
+            try:
+                tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+item[4]+"'", 2)
+                bufscore = database_module.mysql_writer("SELECT waynumber FROM ways WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 2)
+                if str(bufscore.result["waynumber"]) != str(item[3]):
+                    UPDATE_DATA.append(
+                        {
+                            "tid": tid_from_name.result["tid"],
+                            "wayname": item[1],
+                            "changed_from" : str(bufscore.result["waynumber"]),
+                            "changed_to": str(item[3])
+                        }
+                    )
+                    database_module.mysql_writer("UPDATE ways SET waynumber="+item[3]+" WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 1)
+            except:
+                continue
 
-
-#Класс обработки регистрации пользователя
 class signup_user_class():
+    """
+    Класс для обработки и регистрации пользователей
+    """
     def __init__(self, user, tid):
         self.user = user
         self.tid = tid
@@ -67,6 +81,9 @@ class signup_user_class():
             threading.Thread(target=self.signup_dataparser).start()
 
     def signup_detection(self):
+        """
+        Метод проверки на то, чтоб пользователь был в списке
+        """
         try:
             signup_obj = parse_links_class(self.user, global_signup_driver)
             self.signup_detection_result = signup_obj.result_arr
@@ -74,14 +91,20 @@ class signup_user_class():
             self.signup_detection_result = []
 
     def signup_dataparser(self):
+        """
+        Если пользователь есть, то вызывается этот метод
+
+        В этом методе заносятся новые/обновленные данные в таблицы users (пользователи) и ways (направления)
+        """
         input_data = self.signup_detection_result
 
-        #Заносим данные в таблицу users
+        #Заносим данные в users
         exist_check = database_module.mysql_writer("SELECT * FROM users WHERE tid="+str(self.tid),2)
         if exist_check.result != None:
             database_module.mysql_writer("UPDATE users SET name='"+self.user+"', score="+str(input_data[0][6])+" WHERE tid="+str(self.tid)+";",1)
         else:
             database_module.mysql_writer("INSERT INTO users (tid, name, score) VALUES ("+str(self.tid)+",'"+self.user+"',"+str(input_data[0][6])+");",1)
+        #Заносим данные в ways
         way_exist_check = database_module.mysql_writer("SELECT * FROM ways WHERE tid="+str(self.tid),2)
         if way_exist_check != None:
             database_module.mysql_writer("DELETE FROM ways WHERE tid="+str(self.tid)+";",1)
@@ -89,6 +112,11 @@ class signup_user_class():
             database_module.mysql_writer("INSERT INTO ways (tid, wayname, waynumber) VALUES ("+str(self.tid)+",'"+way[1]+"',"+str(way[3])+");",1)
 
 class parse_links_class():
+    """
+    Класс для коммуникации с элементами таблички в selentium
+
+    Вызывается и при регистрации и при проверке обновлённых результатов с разными драйверами
+    """
     def __init__(self, abitname, driver):
         self.driver = driver
         self.abitname = abitname
@@ -99,13 +127,13 @@ class parse_links_class():
         result_arr = self.result_arr
         driver = self.driver
         driver.get(GLOBAL_URL)
-        #time.sleep(1)
+        #time.sleep(1) #Иногда происходит дубляж если закомментировано, почему?
         element = driver.find_element_by_xpath('//*[@id="ASPxGridView1_DXFREditorcol3_I"]')
         element.click()
         element.clear()
         element.send_keys(self.abitname)
         #Ожидаем пока прогрузится страничка
-        time.sleep(8)
+        time.sleep(PAGE_WAITING_INT)
         soup_content = BeautifulSoup(driver.page_source, "lxml")
 
         i = 0
@@ -126,19 +154,22 @@ class parse_links_class():
 @app.route('/adduser', methods=['POST','GET'])
 def add_user():
     """
-    Метод для добавления пользователя
+    Метод Flask'а для регистрации новых пользователей
     """
     tg_data = request.json
     name = tg_data["username"]
     tid = tg_data["tid"]
     signup_obj = signup_user_class(name, tid)
     if signup_obj.signup_detection_result == []:
-        return json.dumps({"status": "exception", "description": "Пользователя нет в списке"})
+        return json.dumps({"status": "exception"})
     return json.dumps({"status": "ok"})
 
 #Обновления
 @app.route('/updates', methods=['POST','GET'])
 def get_updates():
+    """
+    Метод Flask'а для получения обновлений рейтинга
+    """
     global UPDATE_DATA
     out_data = UPDATE_DATA
     UPDATE_DATA = []
