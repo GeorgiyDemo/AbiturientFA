@@ -12,7 +12,7 @@ import database_module, json, threading
 from flask import Flask, request
 
 UPDATE_DATA = []
-GLOBAL_URL = "http://lists4priemka.fa.ru/listabits.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E"
+GLOBAL_URL = "http://lists4priemka.fa.ru/enrollment.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E"
 PAGE_WAITING_INT = 8
 
 #Фикс для Docker
@@ -59,18 +59,18 @@ class get_results_class():
         global UPDATE_DATA
         for item in data:
             try:
-                tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+item[4]+"'", 2)
-                bufscore = database_module.mysql_writer("SELECT waynumber FROM ways WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 2)
+                tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+item[3]+"'", 2)
+                bufscore = database_module.mysql_writer("SELECT waynumber FROM ways WHERE wayname='"+item[4]+"' AND tid="+tid_from_name.result["tid"], 2)
                 if str(bufscore.result["waynumber"]) != str(item[3]):
                     UPDATE_DATA.append(
                         {
                             "tid": tid_from_name.result["tid"],
-                            "wayname": item[1],
+                            "wayname": item[4],
                             "changed_from" : str(bufscore.result["waynumber"]),
-                            "changed_to": str(item[3])
+                            "changed_to": str(item[1])
                         }
                     )
-                    database_module.mysql_writer("UPDATE ways SET waynumber="+item[3]+" WHERE wayname='"+item[1]+"' AND tid="+tid_from_name.result["tid"], 1)
+                    database_module.mysql_writer("UPDATE ways SET waynumber="+item[1]+" WHERE wayname='"+item[4]+"' AND tid="+tid_from_name.result["tid"], 1)
             except:
                 continue
 
@@ -115,7 +115,7 @@ class signup_user_class():
         if way_exist_check != None:
             database_module.mysql_writer("DELETE FROM ways WHERE tid="+str(self.tid)+";",1)
         for way in input_data:
-            database_module.mysql_writer("INSERT INTO ways (tid, wayname, waynumber) VALUES ("+str(self.tid)+",'"+way[1]+"',"+str(way[3])+");",1)
+            database_module.mysql_writer("INSERT INTO ways (tid, wayname, waynumber) VALUES ("+str(self.tid)+",'"+way[4]+"',"+str(way[1])+");",1)
 
 class parse_links_class():
     """
@@ -134,7 +134,7 @@ class parse_links_class():
         driver = self.driver
         driver.get(GLOBAL_URL)
         #time.sleep(1) #Иногда происходит дубляж если закомментировано, почему?
-        element = driver.find_element_by_xpath('//*[@id="ASPxGridView1_DXFREditorcol3_I"]')
+        element = driver.find_element_by_xpath('//*[@id="ASPxGridView1_DXFREditorcol2_I"]')
         element.click()
         element.clear()
         element.send_keys(self.abitname)
