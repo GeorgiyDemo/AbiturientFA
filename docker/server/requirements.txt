@@ -1,0 +1,7 @@
+bs4==0.0.1
+selenium==3.141.0
+PyMySQL==0.9.3
+requests==2.22.0
+lxml==4.3.3
+Flask==1.0.2
+PyYAML==3.13
