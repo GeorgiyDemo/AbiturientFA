@@ -51,7 +51,6 @@ class get_results_class():
         Если данные разные, то формирует элемент в UPDATE_DATA и заносит новые данные в БД
         """
         global UPDATE_DATA
-        print(data)
         for item in data:
             try:
                 tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+item[3]+"'", 2)
