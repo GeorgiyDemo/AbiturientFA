@@ -61,7 +61,7 @@ class get_results_class():
             try:
                 tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='"+item[3]+"'", 2)
                 bufscore = database_module.mysql_writer("SELECT waynumber FROM ways WHERE wayname='"+item[4]+"' AND tid="+tid_from_name.result["tid"], 2)
-                if str(bufscore.result["waynumber"]) != str(item[3]):
+                if str(bufscore.result["waynumber"]) != str(item[1]):
                     UPDATE_DATA.append(
                         {
                             "tid": tid_from_name.result["tid"],
