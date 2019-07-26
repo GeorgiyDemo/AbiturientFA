@@ -1,9 +1,9 @@
 from pytils import numeral
 import vk, random, time, datetime, os, json, requests, xlrd, re, yaml
+import database_module
 
-
-with open("./token.yaml", 'r') as stream:
-    API_TOKEN = yaml.load(stream)
+with open("./yaml/token.yaml", 'r') as stream:
+    API_TOKEN = yaml.safe_load(stream)
 
 API_VERSION = 5.73
 USERS_YEARS = ["1999","2000", "2001","2002"]
@@ -12,7 +12,11 @@ OUT_TXT_FILE = "OUTPUT.txt"
 def vk_search_good_output(vk_json):
     out_str = ""
     for item in vk_json:
-        out_str += item["first_name"]+" "+item["last_name"]+" "+"https://vk.com/id"+str(item["id"])+"\n"
+
+        vk_link = "https://vk.com/id"+str(item["id"])
+        obj = database_module.mysql_writer("INSERT INTO vk_users (first_name, last_name, link) VALUES ('"+item["first_name"]+"','"+item["last_name"]+"','"+vk_link+"')")
+        if obj.result == True:
+            out_str += item["first_name"]+" "+item["last_name"]+" "+vk_link+"\n"
 
     f = open(OUT_TXT_FILE, 'a')
     f.write(out_str)
@@ -25,6 +29,8 @@ class vk_processing():
         session = vk.Session(access_token=API_TOKEN)
         self.api = vk.API(session)
         self.APIVersion = API_VERSION
+        #Отчистка файла от предыдущей сессии
+        open(OUT_TXT_FILE, 'w').close()
         self.input_processing()
 
     def input_processing(self):
@@ -41,7 +47,7 @@ class vk_processing():
         #Практически не помогает
         print("[1] Простой поиск пользователя по VK")
         simple_profiles = self.api.users.search(q=inputname,v=self.APIVersion)["items"]
-        if len(simple_profiles) >= 3:
+        if len(simple_profiles) > 5:
             print("Ойй, много людей переезжаем на поиск по годам")
         else:
             print("Отлично, выборка достаточно малая")
@@ -53,7 +59,7 @@ class vk_processing():
             for born_year in USERS_YEARS:
                 time.sleep(1)
                 profiles = self.api.users.search(q=inputname,birth_year=born_year,v=self.APIVersion)["items"]
-                if (len(profiles)<=3):
+                if (len(profiles) < 5):
                     print("Отлично, выборка достаточно малая по "+born_year+" году")
                     print(vk_search_good_output(profiles))
                     good_flag = True
