@@ -1,11 +1,7 @@
-"""
-    Серверочек с Flask API с Selentium для определения рейтинга абитуры
-"""
-
 import requests
 from selenium import webdriver
 from bs4 import BeautifulSoup
-import time
+import time, vk_module
 import json, threading
 
 SEARCH_WORD = "Факультет прикладной математики и информационных технологий"
@@ -29,9 +25,8 @@ class get_results_class():
         self.result_arr = user_obj.result_arr
 
     def result_processing(self):
-        for item in self.result_arr:
-            print(item)
-
+        obj = vk_module.vk_processing(self.result_arr)
+        #TODO Дальше осуществляем какую-либо валидацию
 
 class parse_links_class():
     """
@@ -71,7 +66,6 @@ class parse_links_class():
                     buf_arr = []
                     for element in dx_data:
                         buf_arr.append(element.string)
-                    print("Получили массив:")
                     print(buf_arr)
                     result_arr.append(buf_arr)
                     string_processing += 1
