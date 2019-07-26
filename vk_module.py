@@ -64,7 +64,7 @@ class vk_processing():
             for born_year in USERS_YEARS:
                 time.sleep(1)
                 profiles = self.api.users.search(q=inputname,birth_year=born_year,v=self.APIVersion)["items"]
-                if (len(profiles) < 5) or profiles != []:
+                if (len(profiles) < 5) and profiles != []:
                     print("Отлично, выборка достаточно малая по "+born_year+" году")
                     print(vk_search_good_output(profiles,False))
                     good_flag = True
