@@ -1,8 +1,10 @@
 import requests
 from selenium import webdriver
 from bs4 import BeautifulSoup
-import time, vk_module
+import time
 import json, threading
+import vk_module
+import get_updates_module
 
 SEARCH_WORD = "Факультет прикладной математики и информационных технологий"
 GLOBAL_URL = "http://lists4priemka.fa.ru/enrollment.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E"
@@ -25,7 +27,8 @@ class get_results_class():
         self.result_arr = user_obj.result_arr
 
     def result_processing(self):
-        obj = vk_module.vk_processing(self.result_arr)
+        table_obj = get_updates_module.table_processing(self.result_arr)
+        vk_obj = vk_module.vk_processing(self.result_arr)
         #TODO Дальше осуществляем какую-либо валидацию
 
 class parse_links_class():

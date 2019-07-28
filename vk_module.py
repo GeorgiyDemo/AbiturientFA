@@ -1,5 +1,4 @@
-from pytils import numeral
-import vk, random, time, datetime, os, json, requests, xlrd, re, yaml
+import vk, time, json, requests, xlrd, yaml
 import database_module
 
 with open("./yaml/token.yaml", 'r') as stream:
@@ -27,6 +26,7 @@ def vk_search_good_output(vk_json, groupflag):
 
 class vk_processing():
     def __init__(self, result_array):
+        print("*Модуль поиска по VK*")
         self.result_array = result_array
         session = vk.Session(access_token=API_TOKEN)
         self.api = vk.API(session)
@@ -37,7 +37,7 @@ class vk_processing():
 
     def input_processing(self):
         for item in self.result_array:
-            print("*Работаем с пользователем "+item[3]+"*\nМесто "+str(item[1])+str(", балл ")+str(item[6])+" ["+str(item[5])+"]")
+            print("**Работаем с пользователем "+item[3]+"**\nМесто "+str(item[1])+str(", балл ")+str(item[6])+" ["+str(item[5])+"]")
             print(item[4])
             buf_name = item[3].split(" ")
             abit_name = buf_name[0]+" "+buf_name[1]
