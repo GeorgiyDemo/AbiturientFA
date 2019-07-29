@@ -6,8 +6,8 @@ with open("./yaml/token.yaml", 'r') as stream:
 
 API_VERSION = 5.73
 USERS_YEARS = ["1999","2000", "2001","2002"]
-GROUPS_ID_LIST = [134724725, 6319]
-OUT_TXT_FILE = "OUTPUT.txt"
+GROUPS_ID_LIST = [134724725, 6319, 153039551, 27590309, 184403760]
+OUT_TXT_FILE = "./OUTPUT/OUTPUT_VK.txt"
 
 def vk_search_good_output(vk_json, groupflag):
     out_str = ""

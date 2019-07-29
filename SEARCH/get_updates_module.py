@@ -1,7 +1,7 @@
 import database_module
 import pandas as pd
 
-OUT_XLSX_FILE = "OUTPUT_TABLE.xlsx"
+OUT_XLSX_FILE = "./OUTPUT/OUTPUT_TABLE.xlsx"
 
 class table_processing():
     def __init__(self, result_array):
