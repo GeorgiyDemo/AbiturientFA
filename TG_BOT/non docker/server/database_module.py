@@ -1,6 +1,7 @@
 import pymysql.cursors
 import yaml
 
+
 class mysql_writer():
     def __init__(self, sql_string, method):
         with open("./yaml/DBlist.yaml", 'r') as stream:

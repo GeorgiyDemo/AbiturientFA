@@ -1,4 +1,7 @@
-import vk, time, json, yaml
+import json
+import time
+import vk
+import yaml
 
 with open("./yaml/token.yaml", 'r') as stream:
     API_TOKEN = yaml.safe_load(stream)
@@ -7,6 +10,7 @@ CHATID_TO_SEND = 54
 GROUP_ID = -184403760
 API_VERSION = 5.73
 OUT_FILE = "./yaml/last_post.yaml"
+
 
 class vk_class():
 
@@ -21,15 +25,15 @@ class vk_class():
             time.sleep(60)
 
     def group_check_posts(self):
-        results = self.api.wall.get(owner_id=GROUP_ID,v=self.APIVersion)["items"][0]
+        results = self.api.wall.get(owner_id=GROUP_ID, v=self.APIVersion)["items"][0]
         if results["date"] != self.post_id:
             self.write_post_to_chat(results)
             self.post_id = results["date"]
             self.set_last_post_id()
 
     def write_post_to_chat(self, input_json):
-        attachment_str = "wall"+str(input_json["from_id"])+"_"+str(input_json["id"])
-        self.api.messages.send(chat_id=CHATID_TO_SEND, attachment=attachment_str,v=self.APIVersion)
+        attachment_str = "wall" + str(input_json["from_id"]) + "_" + str(input_json["id"])
+        self.api.messages.send(chat_id=CHATID_TO_SEND, attachment=attachment_str, v=self.APIVersion)
 
     def get_last_post_id(self):
         with open(OUT_FILE, 'r') as stream:
@@ -38,6 +42,7 @@ class vk_class():
     def set_last_post_id(self):
         with open(OUT_FILE, 'w') as stream:
             yaml.dump(self.post_id, stream)
+
 
 if __name__ == '__main__':
     vk_class()
