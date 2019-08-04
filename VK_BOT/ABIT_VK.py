@@ -12,7 +12,7 @@ API_VERSION = 5.73
 OUT_FILE = "./yaml/last_post.yaml"
 
 
-class vk_class():
+class VKClass(object):
 
     def __init__(self):
         session = vk.Session(access_token=API_TOKEN)
@@ -45,4 +45,4 @@ class vk_class():
 
 
 if __name__ == '__main__':
-    vk_class()
+    VKClass()
