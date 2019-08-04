@@ -25,7 +25,7 @@ class VKClass(object):
             time.sleep(60)
 
     def group_check_posts(self):
-        results = self.api.wall.get(owner_id=GROUP_ID, v=self.APIVersion)["items"][0]
+        results = self.api.wall.get(owner_id=GROUP_ID, v=self.APIVersion)["items"][1]
         if results["date"] != self.post_id:
             self.write_post_to_chat(results)
             self.post_id = results["date"]
