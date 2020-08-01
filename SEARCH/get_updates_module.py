@@ -4,7 +4,7 @@ import pandas as pd
 OUT_XLSX_FILE = "./OUTPUT/OUTPUT_TABLE.xlsx"
 
 
-class table_processing():
+class TableClass():
     def __init__(self, result_array):
         print("*Модуль определения обновлений таблицы*\nПроверяем дубликаты по БД..")
         formated_arr = []

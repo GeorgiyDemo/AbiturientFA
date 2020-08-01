@@ -10,7 +10,7 @@ with open("./yaml/token.yaml", 'r') as stream:
     API_TOKEN = yaml.safe_load(stream)
 
 API_VERSION = 5.73
-USERS_YEARS = ["1999", "2000", "2001", "2002"]
+USERS_YEARS = ["2000", "2001", "2002", "2003"]
 GROUPS_ID_LIST = [134724725, 6319, 153039551, 27590309, 184403760, 76552532]
 OUT_TXT_FILE = "./OUTPUT/OUTPUT_VK.txt"
 
@@ -33,13 +33,14 @@ def vk_search_good_output(vk_json, groupflag):
     return out_str
 
 
-class vk_processing():
+class VkClass():
     def __init__(self, result_array):
         print("*Модуль поиска по VK*")
         self.result_array = result_array
         session = vk.Session(access_token=API_TOKEN)
         self.api = vk.API(session)
         self.APIVersion = API_VERSION
+
         # Отчистка файла от предыдущей сессии
         open(OUT_TXT_FILE, 'w').close()
         self.input_processing()

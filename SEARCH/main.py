@@ -3,35 +3,39 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 import json, threading
-import vk_module
-import get_updates_module
+from vk_module import VkClass
+from get_updates_module import TableClass
 
-SEARCH_WORD = "Факультет прикладной математики и информационных технологий"
+SEARCH_WORD = "Факультет информационных технологий и анализа больших данных"
 GLOBAL_URL = "http://lists4priemka.fa.ru/enrollment.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E"
 PAGE_WAITING_INT = 8
 
 #Драйвер для проверки обновлений
-global_threading_driver = webdriver.Chrome()
+global_threading_driver = webdriver.Chrome("./chromedriver")
 
 #Классы для работы в отдельном потоке
-class get_results_class():
+class ResultsClass():
     """
     Класс для получения обновлений через selentium
     """
     def __init__(self):
+        #Получаем данные с сайта приёмки
         self.get_users()
+        #Додавляем куда-либо эти данные
         self.result_processing()
+    
     def get_users(self):
         driver = global_threading_driver
-        user_obj = parse_links_class(SEARCH_WORD, driver)
-        self.result_arr = user_obj.result_arr
+        parse_obj = ParserClass(SEARCH_WORD, driver)
+        self.result_arr = parse_obj.result_arr
 
     def result_processing(self):
-        table_obj = get_updates_module.table_processing(self.result_arr)
-        vk_obj = vk_module.vk_processing(self.result_arr)
+        print(self.result_arr)
+        table_obj = TableClass(self.result_arr)
+        vk_obj = VkClass(self.result_arr)
         #TODO Дальше осуществляем какую-либо валидацию
 
-class parse_links_class():
+class ParserClass():
     """
     Класс для коммуникации с элементами таблички в selentium
 
@@ -86,4 +90,4 @@ class parse_links_class():
         self.result_arr = result_arr
 
 if __name__ == '__main__':
-    get_results_class()
+    ResultsClass()
