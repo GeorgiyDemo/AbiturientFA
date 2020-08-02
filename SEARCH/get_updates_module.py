@@ -17,11 +17,10 @@ class TableClass():
     def table_check_method(self, a):
         self.dbflag = False
         obj = database_module.mysql_writer(
-            "INSERT INTO table_updates (number, fio, contesttype, score) VALUES ('" + str(a[1]) + "','" + a[3] + "','" +
-            a[5] + "'," + str(a[6]) + ")")
+            "INSERT INTO table_updates (number, fio, contesttype, score) VALUES ('" + str(a[2]) + "','" + a[3] + "','" +
+            a[5] + "'," + str(a[7]) + ")")
         if obj.result == True:
             self.dbflag = True
-            self.buf_list = [str(a[1]), a[3], a[5], str(a[6])]
 
     def xlsx_writer(self, l):
 

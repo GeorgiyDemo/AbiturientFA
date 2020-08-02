@@ -11,7 +11,7 @@ with open("./yaml/token.yaml", 'r') as stream:
 
 API_VERSION = 5.73
 USERS_YEARS = ["2000", "2001", "2002", "2003"]
-GROUPS_ID_LIST = [134724725, 6319, 153039551, 27590309, 184403760, 76552532]
+GROUPS_ID_LIST = [134724725, 6319, 153039551, 27590309, 76552532, 196939200]
 OUT_TXT_FILE = "./OUTPUT/OUTPUT_VK.txt"
 
 
@@ -48,7 +48,7 @@ class VkClass():
     def input_processing(self):
         for item in self.result_array:
             print("**Работаем с пользователем " + item[3] + "**\nМесто " + str(item[1]) + str(", балл ") + str(
-                item[6]) + " [" + str(item[5]) + "]")
+                item[7]) + " [" + str(item[5]) + "]")
             print(item[4])
             buf_name = item[3].split(" ")
             abit_name = buf_name[0] + " " + buf_name[1]
