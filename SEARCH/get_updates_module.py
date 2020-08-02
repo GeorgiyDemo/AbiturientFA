@@ -21,6 +21,7 @@ class TableClass():
             a[5] + "'," + str(a[7]) + ")")
         if obj.result == True:
             self.dbflag = True
+            self.buf_list = [str(a[2]), a[3], a[5], str(a[7])]
 
     def xlsx_writer(self, l):
 
