@@ -21,10 +21,23 @@ class MySQLWriter(MySQLClass):
         self.processing()
 
     def processing(self):
+        self.result = True
         cursor = self.cursor
-        cursor.execute(self.sql_string)
-        self.connection.commit()
-        self.connection.close()
+        connection = self.connection
+
+        try:
+            cursor = connection.cursor()
+            cursor.execute(self.sql_string)
+        except pymysql.err.IntegrityError:
+            self.result = False
+        except:
+            connection.rollback()
+            connection.close()
+            raise
+        else:
+            connection.commit()
+            connection.close()
+
 
 class MySQLReaderOne(MySQLClass):
     """Получение одного значения с СУБД"""

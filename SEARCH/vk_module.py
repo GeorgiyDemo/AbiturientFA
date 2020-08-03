@@ -20,7 +20,7 @@ def vk_search_good_output(vk_json, groupflag, full_name):
     for item in vk_json:
 
         vk_link = "https://vk.com/id" + str(item["id"])
-        obj = database_module.mysql_writer(
+        obj = database_module.MySQLWriter(
             "INSERT INTO vk_users (first_name, last_name, link, full_name) VALUES ('{}','{}','{}','{}')".format(item["first_name"], item["last_name"], vk_link, full_name))
         
         if obj.result:
@@ -45,14 +45,12 @@ class VkClass():
         self.input_processing()
 
     def input_processing(self):
-        for item in self.result_array:
-            #Проверяем, есть ли результаты по нему в таблице
 
-            obj = database_module.mysql_re("SELECT * FROM vk_users WHERE full_name='{}'".format(item[3]))
-            print(obj.result)
-            #TODO
-            break
-            if obj is None:
+        for item in self.result_array:
+        
+            #Проверяем, есть ли результаты по нему в таблице
+            obj = database_module.MySQLReaderOne("SELECT * FROM vk_users WHERE full_name='{}'".format(item[3]))
+            if obj.result is None:
 
                 print("**Работаем с пользователем " + item[3] + "**\nМесто " + str(item[1]) + str(", балл ") + str(
                     item[7]) + " [" + str(item[5]) + "]")
@@ -63,7 +61,9 @@ class VkClass():
                 time.sleep(3)
                 self.search_profile_method(abit_name, item[3])
                 time.sleep(3)
-
+            
+            else:
+                print("{} - уже проверяли, пропускаем..".format(item[3]))
 
 
     def search_profile_method(self, inputname, full_name):
