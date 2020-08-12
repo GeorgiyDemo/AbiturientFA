@@ -178,17 +178,24 @@ class VkClass:
                             )
                         )
                         self.vk_writer(
-                            username, user_item["profile_link"], user_item["club_link"]
+                            username,
+                            user_item["profile_link"],
+                            user_item["club_link"],
+                            long_name,
                         )
 
             else:
                 print("{} - уже проверяли, пропускаем..".format(long_name))
 
-    def vk_writer(self, username, user_id, club_id):
+    def vk_writer(self, username, user_id, club_id, full_name):
         """Запись данных о пользователе, которого нашли"""
-
-        # TODO
-        # database_module.MySQLClass("INSERT INTO vk_users (first_name, last_name, link, full_name) VALUES ('{}','{}','{}','{}')".format(item["first_name"], item["last_name"], vk_link, long_name),1)
+        first_name, last_name = username.split(" ")
+        database_module.MySQLClass(
+            'INSERT INTO vk_users (first_name, last_name, link, full_name) VALUES ("{}","{}","{}","{}")'.format(
+                first_name, last_name, user_id, full_name
+            ),
+            1,
+        )
 
         out_str = "{} [{}] по группе {}\n".format(username, user_id, club_id)
 
