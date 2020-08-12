@@ -2,9 +2,9 @@ import pymysql.cursors
 import yaml
 
 
-class mysql_writer():
+class mysql_writer:
     def __init__(self, sql_string, method):
-        with open("./yaml/DBlist.yaml", 'r') as stream:
+        with open("./yaml/DBlist.yaml", "r") as stream:
             self.DBLogin = yaml.load(stream)
         self.sql_string = sql_string
         self.result = ""
@@ -20,8 +20,15 @@ class mysql_writer():
         Запись данных в БД
         """
         DBLogin = self.DBLogin
-        connection = pymysql.connect(host=DBLogin[0], port=DBLogin[1], user=DBLogin[2], password=DBLogin[3],
-                                     db=DBLogin[4], cursorclass=pymysql.cursors.DictCursor, autocommit=False)
+        connection = pymysql.connect(
+            host=DBLogin[0],
+            port=DBLogin[1],
+            user=DBLogin[2],
+            password=DBLogin[3],
+            db=DBLogin[4],
+            cursorclass=pymysql.cursors.DictCursor,
+            autocommit=False,
+        )
         try:
             cursor = connection.cursor()
             cursor.execute(self.sql_string)
@@ -40,8 +47,14 @@ class mysql_writer():
         Получение одного элемента БД
         """
         DBLogin = self.DBLogin
-        connection = pymysql.connect(host=DBLogin[0], port=DBLogin[1], user=DBLogin[2], password=DBLogin[3],
-                                     db=DBLogin[4], cursorclass=pymysql.cursors.DictCursor)
+        connection = pymysql.connect(
+            host=DBLogin[0],
+            port=DBLogin[1],
+            user=DBLogin[2],
+            password=DBLogin[3],
+            db=DBLogin[4],
+            cursorclass=pymysql.cursors.DictCursor,
+        )
         try:
             with connection.cursor() as cursor:
                 cursor.execute(self.sql_string)
@@ -55,8 +68,14 @@ class mysql_writer():
         Получение более одного элемента в БД
         """
         DBLogin = self.DBLogin
-        connection = pymysql.connect(host=DBLogin[0], port=DBLogin[1], user=DBLogin[2], password=DBLogin[3],
-                                     db=DBLogin[4], cursorclass=pymysql.cursors.DictCursor)
+        connection = pymysql.connect(
+            host=DBLogin[0],
+            port=DBLogin[1],
+            user=DBLogin[2],
+            password=DBLogin[3],
+            db=DBLogin[4],
+            cursorclass=pymysql.cursors.DictCursor,
+        )
         try:
             with connection.cursor() as cursor:
                 cursor.execute(self.sql_string)

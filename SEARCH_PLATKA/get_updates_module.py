@@ -4,7 +4,7 @@ import pandas as pd
 OUT_XLSX_FILE = "./OUTPUT/OUTPUT_TABLE.xlsx"
 
 
-class TableClass():
+class TableClass:
     def __init__(self, result_array):
         print("*Модуль определения обновлений таблицы*\nПроверяем дубликаты по БД..")
         formated_arr = []
@@ -17,8 +17,16 @@ class TableClass():
     def table_check_method(self, a):
         self.dbflag = False
         obj = database_module.MySQLWriter(
-            "INSERT INTO table_updates (number, fio, contesttype, score) VALUES ('" + str(a[2]) + "','" + a[3] + "','" +
-            a[5] + "'," + str(a[7]) + ")")
+            "INSERT INTO table_updates (number, fio, contesttype, score) VALUES ('"
+            + str(a[2])
+            + "','"
+            + a[3]
+            + "','"
+            + a[5]
+            + "',"
+            + str(a[7])
+            + ")"
+        )
         if obj.result == True:
             self.dbflag = True
             self.buf_list = [str(a[2]), a[3], a[5], str(a[7])]
@@ -38,4 +46,6 @@ class TableClass():
 
         final_list = [number_list, fio_list, contesttype_list, score_list]
         print("Заносим данные в Excel..")
-        pd.DataFrame(final_list).T.to_excel(OUT_XLSX_FILE, encoding='utf-8', index=False)
+        pd.DataFrame(final_list).T.to_excel(
+            OUT_XLSX_FILE, encoding="utf-8", index=False
+        )
