@@ -30,6 +30,8 @@ class MySQLWriter(MySQLClass):
             cursor.execute(self.sql_string)
         except pymysql.err.IntegrityError:
             self.result = False
+        except pymysql.err.OperationalError:
+            self.result = False
         except:
             connection.rollback()
             connection.close()
