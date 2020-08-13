@@ -12,7 +12,7 @@ class TableClass:
             self.table_check_method(user_arr)
             if self.dbflag:
                 formated_arr.append(self.buf_list)
-        
+
         print("Занесли {} новых людей".format(len(formated_arr)))
         self.xlsx_writer(formated_arr)
 
@@ -30,7 +30,7 @@ class TableClass:
             + ")",
             1,
         )
-        
+
         if obj.result:
             self.dbflag = True
             self.buf_list = [str(a[2]), a[3], a[5], str(a[7])]

@@ -8,9 +8,9 @@ from get_updates_module import TableClass
 from database_module import MySQLClass
 
 SEARCH_WORD = "Факультет информационных технологий и анализа больших данных"
-URL_DICT =  { 
+URL_DICT = {
     False: "http://lists4priemka.fa.ru/enrollment.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E",
-    True: "http://lists4priemka.fa.ru/enrollmentpay.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E"
+    True: "http://lists4priemka.fa.ru/enrollmentpay.aspx?fl=0&tl=%D0%B1%D0%BA%D0%BB&le=%D0%92%D0%9F%D0%9E",
 }
 PAGE_WAITING_INT = 8
 
@@ -30,10 +30,10 @@ class ResultsClass:
         if abit_type == "п":
             money_flag = True
 
-        #Выставляем рабочую БД для СУБД (платники и бюджет отдельно)
+        # Выставляем рабочую БД для СУБД (платники и бюджет отдельно)
         MySQLClass.DATABASE = "FA_platka" if money_flag else "FA"
         print(MySQLClass.DATABASE)
-        
+
         # Получаем данные с сайта приёмки
         self.get_users(money_flag)
         # Добавляем куда-либо эти данные
@@ -68,7 +68,6 @@ class ParserClass:
 
         self.abit_parser()
 
-
     def abit_parser(self):
         result_list = self.result_list
         driver = self.driver
@@ -99,12 +98,12 @@ class ParserClass:
                     buf_arr = []
                     for element in dx_data:
                         buf_arr.append(element.string)
-                    
+
                     # TODO Фикс для платки т.к. мне влом это делать как-то адекватно
                     if self.money_flag:
                         buf_arr[6:0] = ["Есть"]
                     print(buf_arr)
-                    
+
                     result_list.append(buf_arr)
                     string_processing += 1
                 except TypeError:

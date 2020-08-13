@@ -3,9 +3,9 @@ import yaml
 
 
 class MySQLClass:
-    
+
     DATABASE = None
-    
+
     def __init__(self, sql_string, method):
         with open("./yaml/DBlist.yaml", "r") as stream:
             self.DBLogin = yaml.safe_load(stream)
