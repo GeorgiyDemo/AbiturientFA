@@ -5,13 +5,15 @@ OUT_XLSX_FILE = "./OUTPUT/OUTPUT_TABLE.xlsx"
 
 
 class TableClass:
-    def __init__(self, result_array):
+    def __init__(self, result_list):
         print("*Модуль определения обновлений таблицы*\nПроверяем дубликаты по БД..")
         formated_arr = []
-        for user_arr in result_array:
+        for user_arr in result_list:
             self.table_check_method(user_arr)
-            if self.dbflag == True:
+            if self.dbflag:
                 formated_arr.append(self.buf_list)
+        
+        print("Занесли {} новых людей".format(len(formated_arr)))
         self.xlsx_writer(formated_arr)
 
     def table_check_method(self, a):
@@ -28,7 +30,8 @@ class TableClass:
             + ")",
             1,
         )
-        if obj.result == True:
+        
+        if obj.result:
             self.dbflag = True
             self.buf_list = [str(a[2]), a[3], a[5], str(a[7])]
 

@@ -3,6 +3,9 @@ import yaml
 
 
 class MySQLClass:
+    
+    DATABASE = None
+    
     def __init__(self, sql_string, method):
         with open("./yaml/DBlist.yaml", "r") as stream:
             self.DBLogin = yaml.safe_load(stream)
@@ -19,13 +22,15 @@ class MySQLClass:
         """
         Запись данных в БД
         """
+        self.result = True
+
         DBLogin = self.DBLogin
         connection = pymysql.connect(
             host=DBLogin[0],
             port=DBLogin[1],
             user=DBLogin[2],
             password=DBLogin[3],
-            db=DBLogin[4],
+            db=MySQLClass.DATABASE,
             cursorclass=pymysql.cursors.DictCursor,
             autocommit=False,
         )
@@ -33,7 +38,7 @@ class MySQLClass:
             cursor = connection.cursor()
             cursor.execute(self.sql_string)
         except pymysql.err.IntegrityError:
-            pass
+            self.result = False
         except:
             self.result = False
             connection.rollback()
@@ -53,7 +58,7 @@ class MySQLClass:
             port=DBLogin[1],
             user=DBLogin[2],
             password=DBLogin[3],
-            db=DBLogin[4],
+            db=MySQLClass.DATABASE,
             cursorclass=pymysql.cursors.DictCursor,
         )
         try:
@@ -74,7 +79,7 @@ class MySQLClass:
             port=DBLogin[1],
             user=DBLogin[2],
             password=DBLogin[3],
-            db=DBLogin[4],
+            db=MySQLClass.DATABASE,
             cursorclass=pymysql.cursors.DictCursor,
         )
         try:

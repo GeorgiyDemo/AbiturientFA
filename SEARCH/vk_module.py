@@ -16,9 +16,9 @@ OUT_TXT_FILE = "./OUTPUT/OUTPUT_VK.txt"
 
 
 class VkClass:
-    def __init__(self, result_array):
+    def __init__(self, result_list):
         print("*Модуль поиска по VK*")
-        self.result_array = result_array
+        self.result_list = result_list
         session = vk.Session(access_token=API_TOKEN)
         self.api = vk.API(session)
         self.APIVersion = API_VERSION
@@ -145,7 +145,7 @@ class VkClass:
     def processing(self):
 
         # Для каждого результата
-        for item in self.result_array:
+        for item in self.result_list:
 
             long_name = item[3]
 
