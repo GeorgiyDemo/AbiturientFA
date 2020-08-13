@@ -21,10 +21,10 @@ PAGE_WAITING_INT = 8
 
 # Фикс для Docker
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--window-size=1420,1080')
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--disable-gpu')
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--window-size=1420,1080")
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--disable-gpu")
 # Драйвер для проверки обновлений
 global_threading_driver = webdriver.Chrome(chrome_options=chrome_options)
 # Драйвер для регистрации пользователей
@@ -42,7 +42,7 @@ def threading_check_server_results():
 
 
 # Классы для работы в отдельном потоке
-class get_results_class():
+class get_results_class:
     """
     Класс для получения обновлений через selentium
     """
@@ -66,27 +66,39 @@ class get_results_class():
         global UPDATE_DATA
         for item in data:
             try:
-                tid_from_name = database_module.mysql_writer("SELECT tid FROM users WHERE name='" + item[3] + "'", 2)
+                tid_from_name = database_module.mysql_writer(
+                    "SELECT tid FROM users WHERE name='" + item[3] + "'", 2
+                )
                 bufscore = database_module.mysql_writer(
-                    "SELECT waynumber FROM ways WHERE wayname='" + item[4] + "' AND tid=" + tid_from_name.result["tid"],
-                    2)
+                    "SELECT waynumber FROM ways WHERE wayname='"
+                    + item[4]
+                    + "' AND tid="
+                    + tid_from_name.result["tid"],
+                    2,
+                )
                 if str(bufscore.result["waynumber"]) != str(item[1]):
                     UPDATE_DATA.append(
                         {
                             "tid": tid_from_name.result["tid"],
                             "wayname": item[4],
                             "changed_from": str(bufscore.result["waynumber"]),
-                            "changed_to": str(item[1])
+                            "changed_to": str(item[1]),
                         }
                     )
                     database_module.mysql_writer(
-                        "UPDATE ways SET waynumber=" + item[1] + " WHERE wayname='" + item[4] + "' AND tid=" +
-                        tid_from_name.result["tid"], 1)
+                        "UPDATE ways SET waynumber="
+                        + item[1]
+                        + " WHERE wayname='"
+                        + item[4]
+                        + "' AND tid="
+                        + tid_from_name.result["tid"],
+                        1,
+                    )
             except:
                 continue
 
 
-class signup_user_class():
+class signup_user_class:
     """
     Класс для обработки и регистрации пользователей
     """
@@ -118,26 +130,53 @@ class signup_user_class():
         input_data = self.signup_detection_result
 
         # Заносим данные в users
-        exist_check = database_module.mysql_writer("SELECT * FROM users WHERE tid=" + str(self.tid), 2)
+        exist_check = database_module.mysql_writer(
+            "SELECT * FROM users WHERE tid=" + str(self.tid), 2
+        )
         if exist_check.result != None:
             database_module.mysql_writer(
-                "UPDATE users SET name='" + self.user + "', score=" + str(input_data[0][6]) + " WHERE tid=" + str(
-                    self.tid) + ";", 1)
+                "UPDATE users SET name='"
+                + self.user
+                + "', score="
+                + str(input_data[0][6])
+                + " WHERE tid="
+                + str(self.tid)
+                + ";",
+                1,
+            )
         else:
             database_module.mysql_writer(
-                "INSERT INTO users (tid, name, score) VALUES (" + str(self.tid) + ",'" + self.user + "'," + str(
-                    input_data[0][6]) + ");", 1)
+                "INSERT INTO users (tid, name, score) VALUES ("
+                + str(self.tid)
+                + ",'"
+                + self.user
+                + "',"
+                + str(input_data[0][6])
+                + ");",
+                1,
+            )
         # Заносим данные в ways
-        way_exist_check = database_module.mysql_writer("SELECT * FROM ways WHERE tid=" + str(self.tid), 2)
+        way_exist_check = database_module.mysql_writer(
+            "SELECT * FROM ways WHERE tid=" + str(self.tid), 2
+        )
         if way_exist_check != None:
-            database_module.mysql_writer("DELETE FROM ways WHERE tid=" + str(self.tid) + ";", 1)
+            database_module.mysql_writer(
+                "DELETE FROM ways WHERE tid=" + str(self.tid) + ";", 1
+            )
         for way in input_data:
             database_module.mysql_writer(
-                "INSERT INTO ways (tid, wayname, waynumber) VALUES (" + str(self.tid) + ",'" + way[4] + "'," + str(
-                    way[1]) + ");", 1)
+                "INSERT INTO ways (tid, wayname, waynumber) VALUES ("
+                + str(self.tid)
+                + ",'"
+                + way[4]
+                + "',"
+                + str(way[1])
+                + ");",
+                1,
+            )
 
 
-class parse_links_class():
+class parse_links_class:
     """
     Класс для коммуникации с элементами таблички в selentium
 
@@ -155,7 +194,9 @@ class parse_links_class():
         driver = self.driver
         driver.get(GLOBAL_URL)
         # time.sleep(1) #Иногда происходит дубляж если закомментировано, почему?
-        element = driver.find_element_by_xpath('//*[@id="ASPxGridView1_DXFREditorcol2_I"]')
+        element = driver.find_element_by_xpath(
+            '//*[@id="ASPxGridView1_DXFREditorcol2_I"]'
+        )
         element.click()
         element.clear()
         element.send_keys(self.abitname)
@@ -166,7 +207,9 @@ class parse_links_class():
         i = 0
         while i != -1:
             try:
-                dx_data = soup_content.find('tr', {'id': 'ASPxGridView1_DXDataRow' + str(i)})
+                dx_data = soup_content.find(
+                    "tr", {"id": "ASPxGridView1_DXDataRow" + str(i)}
+                )
                 buf_arr = []
                 for element in dx_data:
                     buf_arr.append(element.string)
@@ -178,7 +221,7 @@ class parse_links_class():
 
 
 # Flask API для менеджмента
-@app.route('/adduser', methods=['POST', 'GET'])
+@app.route("/adduser", methods=["POST", "GET"])
 def add_user():
     """
     Метод Flask'а для регистрации новых пользователей
@@ -193,7 +236,7 @@ def add_user():
 
 
 # Обновления
-@app.route('/updates', methods=['POST', 'GET'])
+@app.route("/updates", methods=["POST", "GET"])
 def get_updates():
     """
     Метод Flask'а для получения обновлений рейтинга
@@ -204,6 +247,6 @@ def get_updates():
     return json.dumps(out_data, ensure_ascii=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     threading.Thread(target=threading_check_server_results).start()
-    app.run(host='0.0.0.0', debug=False)
+    app.run(host="0.0.0.0", debug=False)

@@ -6,122 +6,198 @@ import vk
 import xlrd
 import yaml
 
-with open("./yaml/token.yaml", 'r') as stream:
+with open("./yaml/token.yaml", "r") as stream:
     API_TOKEN = yaml.safe_load(stream)
 
 API_VERSION = 5.89
 USERS_YEARS = ["2002", "2003"]
-GROUPS_ID_LIST = [134724725, 6319, 153039551, 27590309, 76552532, 196939200, 37015953]
+GROUPS_ID_LIST = [134724725, 27590309, 196939200, 37015953]
 OUT_TXT_FILE = "./OUTPUT/OUTPUT_VK.txt"
 
 
-def vk_writer(vk_json, groupflag, long_name):
-    """Запись данных о пользователе, которого нашли"""
-    for item in vk_json:
-
-        vk_link = "https://vk.com/id" + str(item["id"])
-        if groupflag:
-            print("✅ Нашли профиль {} по группе VK ".format(vk_link))
-        obj = database_module.MySQLWriter(
-            "INSERT INTO vk_users (first_name, last_name, link, full_name) VALUES ('{}','{}','{}','{}')".format(item["first_name"], item["last_name"], vk_link, long_name))
-        
-        #Если успешно записали данные в СУБД
-        if obj.result:
-            groupflag = (groupflag == True and " [по группе в вк]" or "")
-            out_str = item["first_name"] + " " + item["last_name"] + " " + vk_link + groupflag + "\n"
-            with open(OUT_TXT_FILE, 'a') as file:
-                file.write(out_str)
-
-class VkClass():
-    def __init__(self, result_array):
+class VkClass:
+    def __init__(self, result_list):
         print("*Модуль поиска по VK*")
-        self.result_array = result_array
+        self.result_list = result_list
         session = vk.Session(access_token=API_TOKEN)
         self.api = vk.API(session)
         self.APIVersion = API_VERSION
         self.API_checker()
 
+        user_input = input("Обновить участников групп? (y/n) -> ")
+        if user_input == "y":
+            print("Понял, обновляем..")
+            self.groups_dumper()
+        else:
+            print("Понял, пропускаем..")
+
         # Чистка файла от предыдущей сессии
-        open(OUT_TXT_FILE, 'w').close()
+        open(OUT_TXT_FILE, "w").close()
         self.processing()
 
     def API_checker(self):
         """Проверка на работоспособность API т.к. VK может просто не отдавать результаты"""
 
-        #Проверка на то, что API отдает адекватный результат
-        group_results = self.api.users.search(q="Alisa Kot", group_id=161406423, v=self.APIVersion)["items"]
+        # Проверка на то, что API отдает адекватный результат
+        group_results = self.api.users.search(
+            q="Alisa Kot", group_id=161406423, v=self.APIVersion
+        )["items"]
         if group_results == []:
-            raise Exception("🌚🌚🌚 Меняй токен VK 🌚🌚🌚","Контакт убил токен или ты отписался от группы в условии")
+            raise Exception(
+                "🌚🌚🌚 Меняй токен VK 🌚🌚🌚",
+                "Контакт убил токен или ты отписался от группы в условии",
+            )
         else:
             print("🌝 VK API работает")
 
+        # Получаем данные из каждой группы
 
+    def groups_dumper(self):
+        """Дамп участников с указанных групп"""
+
+        database_module.MySQLClass("DELETE FROM FA.buf_table;", 1)
+        USERS_PER_REQUEST = 1000
+        print("Обновляем участников групп..")
+        for group in GROUPS_ID_LIST:
+
+            print("Работаем с группой https//vk.com/club" + str(group))
+            users_count = 1
+            group_results = self.api.groups.getMembers(
+                count=USERS_PER_REQUEST, group_id=group, v=self.APIVersion
+            )
+            group_users = group_results["count"]
+            print("Общее кол-во участников: " + str(group_users))
+
+            # Получаем инфу о пользователях
+            user_results = self.api.users.get(
+                user_ids=group_results["items"], v=self.APIVersion
+            )
+
+            for item in user_results:
+                print(
+                    "{} {}, https://vk.com/{}".format(
+                        item["first_name"], item["last_name"], item["id"]
+                    )
+                )
+                database_module.MySQLClass(
+                    'INSERT INTO buf_table (profile_link, first_name, last_name, club_link) VALUES ("https://vk.com/id{}","{}","{}","https://vk.com/club{}")'.format(
+                        item["id"], item["first_name"], item["last_name"], group
+                    ),
+                    1,
+                )
+                print(
+                    "[{}/{}] Записали пользователя https://vk.com/id{} с группы https://vk.com/club{}".format(
+                        users_count, group_users, item["id"], group
+                    )
+                )
+                users_count += 1
+
+            # Если меньше , чем число участников в группе - выкачиваем все
+            if len(group_results["items"]) < group_users:
+                # Кол-во смещений
+                offset_count = int(group_users / USERS_PER_REQUEST)
+                print(offset_count)
+
+                for i_offset in range(offset_count):
+                    print(
+                        "count={}, group_id={}, offset={}".format(
+                            USERS_PER_REQUEST, group, users_count
+                        )
+                    )
+                    thisgroup_results = self.api.groups.getMembers(
+                        count=USERS_PER_REQUEST,
+                        group_id=group,
+                        offset=users_count,
+                        v=self.APIVersion,
+                    )
+                    # Получаем инфу о пользователях
+                    user_results = self.api.users.get(
+                        user_ids=thisgroup_results["items"], v=self.APIVersion
+                    )
+
+                    for item in user_results:
+                        print(
+                            "{} {}, https://vk.com/{}".format(
+                                item["first_name"], item["last_name"], item["id"]
+                            )
+                        )
+                        database_module.MySQLClass(
+                            'INSERT INTO buf_table (profile_link, first_name, last_name, club_link) VALUES ("https://vk.com/id{}","{}","{}","https://vk.com/club{}")'.format(
+                                item["id"], item["first_name"], item["last_name"], group
+                            ),
+                            1,
+                        )
+                        print(
+                            "[{}/{}] Записали пользователя https://vk.com/id{} с группы https://vk.com/club{}".format(
+                                users_count, group_users, item["id"], group
+                            )
+                        )
+                        users_count += 1
+                    time.sleep(1)
+
+            else:
+                print("Все дампнули за один раз")
+            if users_count == group_users:
+                print("Добавили всех участников группы")
+            else:
+                print("Что-то пошло не так и бы добавили не всех участников группы")
 
     def processing(self):
 
-        #Для каждого результата
-        for item in self.result_array:
-        
+        # Для каждого результата
+        for item in self.result_list:
+
             long_name = item[3]
 
-            #Проверяем, есть ли результаты по нему в таблице
-            obj = database_module.MySQLReaderOne("SELECT * FROM vk_users WHERE full_name='{}'".format(long_name))
-            
+            # Проверяем, есть ли результаты по нему в таблице
+            obj = database_module.MySQLClass(
+                "SELECT * FROM vk_users WHERE full_name='{}'".format(long_name), 2
+            )
+
             if obj.result is None:
-                print("\n🍺 Работаем с пользователем {} 🍺\nМесто {}, {} балл [{}]\n{}".format(long_name, item[1], item[7], item[5], item[4]))
 
-                first_name, second_name, *_ = long_name.split(" ")
-                short_name = "{} {}".format(first_name, second_name)
+                # print("\n🍺 Работаем с пользователем {} 🍺\nМесто {}, {} балл [{}]\n{}".format(long_name, item[1], item[7], item[5], item[4]))
+                last_name, first_name, *_ = long_name.split(" ")
 
-                #Поиск по группам, самый действенный метод
-                self.search_groups(short_name, long_name)
-                time.sleep(3)
-                
-                #TODO
-                #Поиск по профилю
-                self.search_profile_method(short_name, long_name)
-                time.sleep(3)
-            
+                check = database_module.MySQLClass(
+                    "SELECT * FROM buf_table WHERE first_name='{}' AND last_name='{}'".format(
+                        first_name, last_name
+                    ),
+                    3,
+                )
+                if check.result != tuple():
+                    for user_item in check.result:
+                        username = (
+                            user_item["first_name"] + " " + user_item["last_name"]
+                        )
+                        print(
+                            "✅ Нашли профиль {} [{}] по группе {}".format(
+                                username,
+                                user_item["profile_link"],
+                                user_item["club_link"],
+                            )
+                        )
+                        self.vk_writer(
+                            username,
+                            user_item["profile_link"],
+                            user_item["club_link"],
+                            long_name,
+                        )
+
             else:
                 print("{} - уже проверяли, пропускаем..".format(long_name))
 
+    def vk_writer(self, username, user_id, club_id, full_name):
+        """Запись данных о пользователе, которого нашли"""
+        first_name, last_name = username.split(" ")
+        database_module.MySQLClass(
+            'INSERT INTO vk_users (first_name, last_name, link, full_name) VALUES ("{}","{}","{}","{}")'.format(
+                first_name, last_name, user_id, full_name
+            ),
+            1,
+        )
 
-    def search_profile_method(self, inputname, full_name):
-        year_processing_flag = True
+        out_str = "{} [{}] по группе {}\n".format(username, user_id, club_id)
 
-        # Практически не помогает
-        print(" ➜ Простой поиск пользователя по VK")
-        simple_profiles = self.api.users.search(q=inputname, v=self.APIVersion)["items"]
-        if len(simple_profiles) > 3 or simple_profiles == []:
-            print("Много людей переезжаем на поиск по годам..")
-        else:
-            print("Отлично, выборка достаточно малая")
-            vk_writer(simple_profiles, False, full_name)
-            year_processing_flag = False
-
-        if year_processing_flag:
-            good_flag = False
-            for born_year in USERS_YEARS:
-                time.sleep(1)
-                profiles = self.api.users.search(q=inputname, birth_year=born_year, v=self.APIVersion)["items"]
-                if (len(profiles) == 1) and profiles != []:
-                    print("Отлично, выборка достаточно малая по " + born_year + " году")
-                    vk_writer(profiles, False, full_name)
-                    good_flag = True
-                else:
-                    print(born_year + " год, очень много профилей или их нет совсем((")
-
-            if good_flag:
-                print("⚠️Возможно мы нашли человека с фильтрацией по году⚠")
-
-    def search_groups(self, short_name, long_name):
-        """
-        Метод для поиска людей по группам Финашки
-        """
-        print(" ➜ Поиск по группам в VK..")
-        for group in GROUPS_ID_LIST:
-            
-            group_results = self.api.users.search(q=short_name, group_id=group, v=self.APIVersion)["items"]
-            if group_results != []:
-                print("Совпадение есть")
-                vk_writer(group_results, True, long_name)
+        with open(OUT_TXT_FILE, "a") as file:
+            file.write(out_str)

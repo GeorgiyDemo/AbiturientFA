@@ -1,36 +1,46 @@
 import pymysql.cursors
 import yaml
 
-class MySQLClass():
-    """Базовый класс"""
-    def __init__(self):
-        with open("./yaml/DBlist.yaml", 'r') as stream:
-            DBLogin = yaml.safe_load(stream)
-        connection = pymysql.connect(host=DBLogin[0], port=DBLogin[1], user=DBLogin[2], password=DBLogin[3],
-                db=DBLogin[4], cursorclass=pymysql.cursors.DictCursor)
-        self.connection = connection
-        self.cursor = connection.cursor()
-        self.result = None
 
-
-class MySQLWriter(MySQLClass):
-    """Запись данных в СУБД"""
-    def __init__(self, sql_string):
-        super().__init__()
+class MySQLClass:
+    
+    DATABASE = None
+    
+    def __init__(self, sql_string, method):
+        with open("./yaml/DBlist.yaml", "r") as stream:
+            self.DBLogin = yaml.safe_load(stream)
         self.sql_string = sql_string
-        self.processing()
+        self.result = None
+        _selector = {
+            1: self.mysql_writer,
+            2: self.mysql_fetchone,
+            3: self.mysql_fetchall,
+        }
+        _selector[method]()
 
-    def processing(self):
+    def mysql_writer(self):
+        """
+        Запись данных в БД
+        """
         self.result = True
-        cursor = self.cursor
-        connection = self.connection
 
+        DBLogin = self.DBLogin
+        connection = pymysql.connect(
+            host=DBLogin[0],
+            port=DBLogin[1],
+            user=DBLogin[2],
+            password=DBLogin[3],
+            db=MySQLClass.DATABASE,
+            cursorclass=pymysql.cursors.DictCursor,
+            autocommit=False,
+        )
         try:
             cursor = connection.cursor()
             cursor.execute(self.sql_string)
         except pymysql.err.IntegrityError:
             self.result = False
         except:
+            self.result = False
             connection.rollback()
             connection.close()
             raise
@@ -38,29 +48,44 @@ class MySQLWriter(MySQLClass):
             connection.commit()
             connection.close()
 
-
-class MySQLReaderOne(MySQLClass):
-    """Получение одного значения с СУБД"""
-    def __init__(self, sql_string):
-        super().__init__()
-        self.sql_string = sql_string
-        self.processing()
-
-    def processing(self):
-        cursor = self.cursor
-        cursor.execute(self.sql_string)
-        result = cursor.fetchone()
+    def mysql_fetchone(self):
+        """
+        Получение одного элемента БД
+        """
+        DBLogin = self.DBLogin
+        connection = pymysql.connect(
+            host=DBLogin[0],
+            port=DBLogin[1],
+            user=DBLogin[2],
+            password=DBLogin[3],
+            db=MySQLClass.DATABASE,
+            cursorclass=pymysql.cursors.DictCursor,
+        )
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(self.sql_string)
+                result = cursor.fetchone()
+        finally:
+            connection.close()
         self.result = result
 
-class MySQLReaderAll(MySQLClass):
-    """Получение всех значение с СУБД"""
-    def __init__(self, sql_string):
-        super().__init__()
-        self.sql_string = sql_string
-        self.processing()
-
-    def processing(self):
-        cursor = self.cursor
-        cursor.execute(self.sql_string)
-        result = cursor.fetchall()
+    def mysql_fetchall(self):
+        """
+        Получение более одного элемента в БД
+        """
+        DBLogin = self.DBLogin
+        connection = pymysql.connect(
+            host=DBLogin[0],
+            port=DBLogin[1],
+            user=DBLogin[2],
+            password=DBLogin[3],
+            db=MySQLClass.DATABASE,
+            cursorclass=pymysql.cursors.DictCursor,
+        )
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(self.sql_string)
+                result = cursor.fetchall()
+        finally:
+            connection.close()
         self.result = result
